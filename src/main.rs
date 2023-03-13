@@ -39,7 +39,7 @@ fn read_input_file(config: &Config) -> (Vec<u16>, usize) {
     let mut size = 0;
     for (index,byte_pair) in bytes.chunks_exact(2).enumerate() {
         let tmp = u16::from_le_bytes([byte_pair[0], byte_pair[1]]);
-        vector_contents.push(tmp as u16);
+        vector_contents.push(tmp);
         size = index;
     }
     println!("Input file {} with size {}",&config.input_file_path,size*2);
@@ -50,7 +50,7 @@ fn write_output_file(config: &Config, contents: Vec<u16>) {
     let mut file = File::create(&config.output_file_path).unwrap();
     let mut size = 0;
     for (index,value) in contents.iter().enumerate() {
-       file.write(&value.to_le_bytes()).unwrap();
+       file.write_all(&value.to_le_bytes()).unwrap();
        size = index;
     }
     println!("Output file {} with size {}",&config.output_file_path,size*2);
@@ -58,21 +58,19 @@ fn write_output_file(config: &Config, contents: Vec<u16>) {
 //
 fn transform(key: String) -> [u16;128]{
   let mut result:[u16;128]= [0; 128];
-  let mut index = 0;
-  for y in key[..128].chars() {
+  for (index, y) in key[..128].chars().enumerate() {
         let z = (y.to_string()).parse::<u16>().unwrap() & 1;
         result[index] = z;
-        index +=1;
     }
   result
 }
 //
 fn conv_data(a: [u16;16]) ->u16 {
   let mut result:u16=0;
-  for j in  0..16 {
-    result = result | a[j];
+  for (j, item) in  a.iter().enumerate() {
+    result |= item;
     if j!=15 {
-      result = result << 0x0001;
+      result <<= 0x0001;
     }
   }
   result
@@ -80,20 +78,14 @@ fn conv_data(a: [u16;16]) ->u16 {
 //
 fn copy(a: [u16;128], position: usize, num: usize) -> [u16;16] {
   let mut result: [u16;16] = [0; 16];
-  for i in 0..num {
-    result[i] = a[i+position];
-  }
+  result[..num].copy_from_slice(&a[position..(num + position)]);
   result
 }
 //
 fn copy_offset(a:[u16;128], position:usize, num:usize, offset:usize, tmp:[u16;16]) -> [u16;16]{
   let mut result:[u16;16] = [0; 16];
-  for j in offset..16 {
-    result[j] = tmp[j];
-  }
-  for i in 0..num {
-    result[i] = a[i+position];
-  }
+  result[offset..16].copy_from_slice(&tmp[offset..16]);
+  result[..num].copy_from_slice(&a[position..(num + position)]);
   result
 }
 //
@@ -104,16 +96,16 @@ fn info(){
 }
 //
 fn mi(a:u16, inv:[u16;65536])->u16{
-  return inv[a as usize];
+  inv[a as usize]
 }
 //
 fn ai(a:u16)->u16{
   if a==0 {
-    return 0;
+    0
   }
   else {
     let tmp = 65536-a as u32;
-    return tmp as u16;
+    tmp as u16
   }
 }
 // only used to generate the array at the bottom for performance reasons
@@ -324,7 +316,7 @@ fn dec_key_gen(keys:[u16;52],)->[u16;52]{
 }
 //
 fn sum(a:u16,b:u16)->u16{
-  let tmp = (a as i32 + b as i32)%65536 as i32;
+  let tmp = (a as i32 + b as i32)%65536_i32;
   let result:u16 = tmp as u16;
   result
 }
@@ -358,7 +350,7 @@ fn idea(mut input:Vec<u16>,z:[u16;52],size:usize) -> Vec<u16>{
       let mut o:[u16;2]=[0;2];
       let mut w:[u16;5]=[0;5];
       //Transformation
-      w[0]=mult(input[g+0].into(),z[0+j].into());
+      w[0]=mult(input[g].into(),z[j].into());
       w[1]=sum(input[g+1],z[1+j]);
       w[2]=sum(input[g+2],z[2+j]);
       w[3]=mult(input[g+3].into(),z[3+j].into());
@@ -368,22 +360,18 @@ fn idea(mut input:Vec<u16>,z:[u16;52],size:usize) -> Vec<u16>{
       //Multiplication/Addition Module
       let h=ma(o[0],o[1],z[4+j],z[5+j]);//last two &
       //Output xors
-      input[g+0]=xor(w[0],h[1]);
+      input[g]=xor(w[0],h[1]);
       input[g+1]=xor(w[1],h[0]);
       input[g+2]=xor(w[2],h[1]);
       input[g+3]=xor(w[3],h[0]);
       //Final Inversion
-      let tmp = input[g+1];
-      input[g+1] = input[g+2];
-      input[g+2] = tmp;
+      input.swap(g+1, g+2);
       j+=6;
       if j%48==0 {j=0;}
       }
     //Transformation
-    let tmp = input[g+1];
-    input[g+1] = input[g+2];
-    input[g+2] = tmp;
-    input[g+0] = mult(input[g+0].into(),z[48].into());
+    input.swap(g+1, g+2);
+    input[g] = mult(input[g].into(),z[48].into());
     input[g+1] = sum(input[g+1],z[49]);
     input[g+2] = sum(input[g+2],z[50]);
     input[g+3] = mult(input[g+3].into(),z[51].into());
@@ -401,7 +389,7 @@ fn main(){
     });
   let key = open_key_file(&config); 
   let (vector_contents,size) = read_input_file(&config); 
-  println!("size:{}",size);
+  println!("size:{size}");
   match config.mode.as_str() {
         // Encrypt 
         "e" => {
@@ -423,7 +411,7 @@ fn main(){
         _ => info(),
     }
 } 
-
+//
 fn inverse() -> [u16;65536] {
   let  inv: [u16;65536] = [
     0,

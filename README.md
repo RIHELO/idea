@@ -3,8 +3,8 @@ Overview:
   International Data Encryption Algorithm (IDEA)
   The last patents expired in 2012, and IDEA is now patent-free and thus completely free for all uses. 
 Compile:
-  rustc idea.rs
+  ./compile.sh
 Run:
- ./idea e key text output.txt 
- ./idea d key output.txt decrypt
+ time ./target/release/idea_rust e key text output.txt
+ time ./target/release/idea_rust d key output.txt decrypted
  base64 --decode decrypt
