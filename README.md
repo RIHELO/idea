@@ -8,3 +8,7 @@ Run:
  time ./target/release/idea_rust e key text output.txt
  time ./target/release/idea_rust d key output.txt decrypted
  base64 --decode decrypt
+
+Not for industrial or production use.
+This is just a PoC.
+
