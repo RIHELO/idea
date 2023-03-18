@@ -1,7 +1,8 @@
 Overview:
  https://en.wikipedia.org/wiki/International_Data_Encryption_Algorithm
-  International Data Encryption Algorithm (IDEA)
-  The last patents expired in 2012, and IDEA is now patent-free and thus completely free for all uses. 
+According to wikipedia:
+"International Data Encryption Algorithm (IDEA)
+  The last patents expired in 2012, and IDEA is now patent-free and thus completely free for all uses."
 Compile:
   ./compile.sh
 Run:
